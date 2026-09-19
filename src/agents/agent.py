@@ -17,10 +17,10 @@ class agentic_workflow:
     def get_graph(self):
         return self.graph
 
-    def orchestrator(self, state: graph_state) -> graph_state:
+    async def orchestrator(self, state: graph_state) -> graph_state:
         try:
             system_promptt = get_chat_completion_system_prompt(self.available_tools)
-            response = get_chat_completion(llm_client=self.llm_client, state=state, model="openai/gpt-oss-120b", response_model=orchestrator_output, system_prompt = system_promptt)
+            response = await get_chat_completion(llm_client=self.llm_client, state=state, model="openai/gpt-oss-120b", response_model=orchestrator_output, system_prompt = system_promptt)
             json_response = response.model_dump()
             count = state["count"] + 1
             return {

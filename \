@@ -40,7 +40,7 @@ async def run_inference_with_stream(query: str, user: dict, supabase_client, cus
             stream_mode="updates"
         ):
             for node_name, update in chunk.items():
-                print("update: ", update)
+                print(update)
                 print(node_name, "\n")
                 if node_name=="orchestrator":
                     yield f"data: {json.dumps({'event': 'agent calls', 'node': node_name, 'data': update['tool_calls'] if update['tool_calls'] else []})}\n\n"

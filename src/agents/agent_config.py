@@ -2,7 +2,7 @@ from langchain_groq import ChatGroq
 from langchain.agents import create_agent
 from KnowledgeBaseTool.kb_tools import ingest_documents, retrieve_documents
 from services.booking_tools import fetch_room_data, update_room_data
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 import os
 import instructor
 from langsmith.wrappers import wrap_openai
@@ -13,7 +13,7 @@ load_dotenv()
 
 def get_orchestrator_client():
     client = instructor.from_openai(
-         wrap_openai(OpenAI(
+         wrap_openai(AsyncOpenAI(
          base_url="https://openrouter.ai/api/v1",
          api_key=os.environ.get("OPENROUTER_API_KEY"),
          )),
