@@ -20,7 +20,7 @@ async def fetch_room_data(config: RunnableConfig):
 
 @tool
 async def update_room_data(slot_id: str, occupier_email: str, config: RunnableConfig):
-    """Assign an existing slot to an occupier, and email them a confirmation link.
+    """Assign an existing slot to an occupier, this tool sends them a confirmation link.
 
     The slot's times are set by the business and are not editable here - the only
     thing this changes is who the slot belongs to.
@@ -43,13 +43,12 @@ async def update_room_data(slot_id: str, occupier_email: str, config: RunnableCo
         # an update matching nothing still comes back 200 with an empty list, so
         # without this a bad slotid would silently "succeed" and send no email
         if not response.data:
-            raise ValueError(f"No slot {slot_id} belonging to this business")
-        # times come from the row rather than the agent, so the email can only
+            raise ValueError(f"No slot {slot_id} belonging to this business") # times come from the row rather than the agent, so the email can only
         # describe the slot that was actually assigned
         slot = response.data[0]
         verf_id = slot["verification_id"]
         html_content = get_html_content(occupier_email, slot["time_start"], slot["time_end"], verf_id)
-        send_email(occupier_email, "Booking Verification", html_content)
+        await send_email(occupier_email, "Booking Verification", html_content)
         return response
     except Exception as e:
         raise ToolException(f"Error in tool execution: {e}")
@@ -74,7 +73,7 @@ def delete_room_data(slot_id: int, config: RunnableConfig):
     return
 
 @tool
-def insert_room_data(time_start: str, time_end: str, occupier_email: str, config: RunnableConfig):
+async def insert_room_data(time_start: str, time_end: str, occupier_email: str, config: RunnableConfig):
     """ inserts data into the database with a pending, and sends an email to the provided email for booking confirmation.
 
     Args:
@@ -85,7 +84,7 @@ def insert_room_data(time_start: str, time_end: str, occupier_email: str, config
     try:
         user_id = config["configurable"]["user_id"]
         supabase = config["configurable"]["supabase_client"]
-        response = (supabase.table("slots")
+        response = await (supabase.table("slots")
             .insert({
                 "business_id": user_id,
                 "time_start": time_start,
@@ -96,7 +95,7 @@ def insert_room_data(time_start: str, time_end: str, occupier_email: str, config
             .execute())
         verf_id = response.data[0]["verification_id"]
         html_content = get_html_content(occupier_email, time_start, time_end, verf_id)
-        send_email(occupier_email, "Booking Verification", html_content) #embed a webhook link too in the email
+        await send_email(occupier_email, "Booking Verification", html_content) #embed a webhook link too in the email
         return response
     except Exception as e:
         raise ToolException(f"Error in tool execution: {e}")

@@ -6,7 +6,7 @@ load_dotenv()
 BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
 
 
-def send_email(to_email: str, subject: str, html_content: str) -> dict:
+async def send_email(to_email: str, subject: str, html_content: str) -> dict:
     """Send a transactional email through Brevo's REST API.
 
     Raises on any non-2xx response or network failure so callers can decide
@@ -15,21 +15,21 @@ def send_email(to_email: str, subject: str, html_content: str) -> dict:
     api_key = os.environ.get("BREVO_API_KEY")
     sender_email = os.environ.get("BREVO_SENDER_EMAIL")
     sender_name = os.environ.get("BREVO_SENDER_NAME", "Operations Copilot")
-
-    response = httpx.post(
-        BREVO_API_URL,
-        headers={
-            "api-key": api_key,
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-        json={
-            "sender": {"name": sender_name, "email": sender_email},
-            "to": [{"email": to_email}],
-            "subject": subject,
-            "htmlContent": html_content,
-        },
-    )
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            BREVO_API_URL,
+            headers={
+                "api-key": api_key,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            json={
+                "sender": {"name": sender_name, "email": sender_email},
+                "to": [{"email": to_email}],
+                "subject": subject,
+                "htmlContent": html_content,
+            },
+        )
     response.raise_for_status()
     return response.json()
 
