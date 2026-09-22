@@ -13,16 +13,16 @@ class Retrieval:
         return
 
     async def retrieve(self, query, namespace):
-        embeddings = self._create_embeddings(query)
+        embeddings = await self._create_embeddings(query)
         results = await self._get_results(embeddings, namespace)
         return results
-    def _create_embeddings(self, query):
+    async def _create_embeddings(self, query):
         try:
             # Embed the query with the SAME model used at ingestion so the
             # query vector lives in the same space as the stored chunks.
             # get_openrouter_embeddings takes a list and returns one vector
             # per item, so pass the query as a single-element list and unwrap.
-            embeddings = get_openrouter_embeddings([query])[0]
+            embeddings = await get_openrouter_embeddings([query])[0]
             return embeddings
         except Exception:
             raise RetrievalError('retrieval.py: error in creating retrieval embeddings')

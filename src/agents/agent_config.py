@@ -2,7 +2,7 @@ from langchain_groq import ChatGroq
 from langchain.agents import create_agent
 from KnowledgeBaseTool.kb_tools import ingest_documents, retrieve_documents
 from services.booking_tools import fetch_room_data, update_room_data
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 import os
 import instructor
 from langsmith.wrappers import wrap_openai
@@ -13,7 +13,7 @@ load_dotenv()
 
 def get_orchestrator_client():
     client = instructor.from_openai(
-         wrap_openai(OpenAI(
+         wrap_openai(AsyncOpenAI(
          base_url="https://openrouter.ai/api/v1",
          api_key=os.environ.get("OPENROUTER_API_KEY"),
          )),
@@ -55,6 +55,7 @@ def get_booking_agent_system_prompt():
                 are actually open. Tell the person which slot you propose, with its times, and call
                 update_room_data only once they have agreed to that specific slot. Never invent a
                 slotid or an occupier_email — ask for whatever is missing instead of guessing.
+                But do not ask again and again, if you've been instructed once to book a slot and all conditions are fulfilled, then book it without excessive questioning.
                 """
     return prompt
 
@@ -110,13 +111,16 @@ def get_chat_completion_system_prompt(available_tools):
                 your response: 
                 {{'reasoning': 'The user wants to book a room, which can be done using the booking agent. I will call the booking_agent tool to retrieve the room information.', 'tool_calls': [{{'tool': 'booking_agent', 'argument': ['fetch room data to check which rooms are available]}}], 'return_to_user': False}}
 
+                - also, you should be expressive of what you want to the agent while communicating through the 'argument': ['....message...']
+
                 - once the called agents have presented with their responses, return the summary using the "summary_of_agents_response". 
+                - if the user does not provide additional information, try asking him more questions instead of giving a cold shoulder.
 
                 """
     return prompt
 
-def get_chat_completion(llm_client, state, model, response_model, system_prompt):
-    response = llm_client.chat.completions.create(
+async def get_chat_completion(llm_client, state, model, response_model, system_prompt):
+    response = await llm_client.chat.completions.create(
                model=model,
                messages=[{"role": "system", "content": system_prompt}] + state["messages"] + [{"role": "assistant", "content": f"""Agent outputs —
                         knowledge_base_agent: {state['knowledge_base_agent_output']}, booking_agent: {state['booking_agent_output']}"""}],

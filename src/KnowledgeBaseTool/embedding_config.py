@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+import httpx
 load_dotenv()
 import os
 import requests
@@ -25,7 +26,7 @@ def get_google_embeddings(chunks):
     return embeddings
 
 
-def get_openrouter_embeddings(chunks):
+async def get_openrouter_embeddings(chunks):
     # Embed a list of text chunks via OpenRouter, returns one vector per chunk.
     headers = {
         "Authorization": f"Bearer {os.environ.get('OPENROUTER_API_KEY')}",
@@ -42,7 +43,10 @@ def get_openrouter_embeddings(chunks):
         # why we also truncate below to guarantee the final size.
         "dimensions": EMBEDDING_DIMENSIONS,
     }
-    response = requests.post(OPENROUTER_EMBEDDINGS_URL, headers=headers, json=payload)
+
+#    response = requests.post(OPENROUTER_EMBEDDINGS_URL, headers=headers, json=payload)
+    async with httpx.AsyncClient() as client:
+        response = await client.post(OPENROUTER_EMBEDDINGS_URL, headers=headers, json=payload)
     response.raise_for_status()
     data = response.json()["data"]
     # Truncate each vector to 1024 (Matryoshka) so it matches the Pinecone index.

@@ -41,7 +41,7 @@ class Ingestion:
         doc = self._load_document()
         chunks = self._create_chunks(doc)
         str_chunks, metadatas = self._convert_doc_chunks_to_str(chunks)
-        embeddings_list = self._create_embeddings_from_chunks(str_chunks)
+        embeddings_list = await self._create_embeddings_from_chunks(str_chunks)
         vectors_list, vector_ids = self._preparing_ingestions(embeddings_list, str_chunks, metadatas)
         #send to database with record name
         await self._store_in_vectordb(vectors_list, namespace)
@@ -121,7 +121,7 @@ class Ingestion:
             raise IngestionError('Error in ingestion.py _convert_doc_chunks_to_str()')
 
 
-    def _create_embeddings_from_chunks(self, text_chunks): # create embeddings out of string chunks
+    async def _create_embeddings_from_chunks(self, text_chunks): # create embeddings out of string chunks
             # Previous Ollama embeddings (uncomment self.embedding in __init__ to switch back):
             # embeddings = self.embedding.embed_documents(text_chunks)
             
@@ -131,7 +131,7 @@ class Ingestion:
             for i in range(0, len(text_chunks), BATCH_SIZE):
                 chunks = text_chunks[i:i+BATCH_SIZE]
                 # embeddings_from_chunk = get_google_embeddings(chunks)
-                embeddings_from_chunk = get_openrouter_embeddings(chunks)
+                embeddings_from_chunk = await get_openrouter_embeddings(chunks)
                 print("Embedding chunks: ", len(chunks))
                 embeddings = embeddings + embeddings_from_chunk
                 #time.sleep(70)
