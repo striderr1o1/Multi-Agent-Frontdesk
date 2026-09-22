@@ -1,5 +1,4 @@
-# AI Workspace Operations Copilot
-
+# Multi-Agent FrontDesk
 A multi-agent backend that turns a business's documents and calendar into an **AI front
 desk** its customers can talk to. The business signs up, uploads its PDFs, defines its
 bookable slots, and shares one URL. Its customers open that URL and chat with an agent
