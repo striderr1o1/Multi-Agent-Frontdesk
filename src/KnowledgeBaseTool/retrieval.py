@@ -22,7 +22,8 @@ class Retrieval:
             # query vector lives in the same space as the stored chunks.
             # get_openrouter_embeddings takes a list and returns one vector
             # per item, so pass the query as a single-element list and unwrap.
-            embeddings = await get_openrouter_embeddings([query])[0]
+            embeddings = await get_openrouter_embeddings([query])
+            embeddings = embeddings[0]
             return embeddings
         except Exception:
             raise RetrievalError('retrieval.py: error in creating retrieval embeddings')
