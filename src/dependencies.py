@@ -1,6 +1,6 @@
 import uuid
 from agents.agent_config import get_kb_agent, get_booking_agent, get_orchestrator_client
-from services.supabase_db_functions import get_thread_id_from_supabase, save_customer_chat
+from services.supabase_db_functions import save_customer_chat
 import json
 from agents.agent import agentic_workflow
 from agents.graph import setup_graph
@@ -9,18 +9,25 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-async def run_inference_with_stream(query: str, user: dict, supabase_client, customer_client_side_id=None): #should get thread-id from links table
+async def run_inference_with_stream(query: str, user: dict, supabase_client, customer_client_side_id=None, admin = False): #should get thread-id from links table
     # customer_client_side_id is only set on the published /c/ route - the dashboard
     # owner querying their own agent has no customers_data row, so there is nowhere
     # to save the pair and the save is skipped rather than raising "client id invalid"
-    user_id = user["id"] 
+    user_id = user["id"]
+    business_id = user_id
     client = get_orchestrator_client()
     kb_agent = get_kb_agent(user_id, supabase_client)
     booking_agent = get_booking_agent(user_id, supabase_client)
     agent = agentic_workflow(llm_client=client, kb_agent=kb_agent, bk_agent=booking_agent, setup_graph=setup_graph)
     graph_builder = agent.get_graph()
     DB_URI = os.getenv("DATABASE_URL")
-    thread_id = await get_thread_id_from_supabase(supabase_client, user_id)
+    # thread_id = customer_id + ":" + link_id
+    # otherwise, if business owner running from the dashboard, thread_id = business_id
+    if admin == True:
+        thread_id = business_id
+
+    thread_id = f"{customer_client_side_id}:{business_id}"
+    
     async with AsyncPostgresSaver.from_conn_string(DB_URI) as checkpointer:
         await checkpointer.setup()
         graph = graph_builder.compile(checkpointer=checkpointer)
