@@ -17,6 +17,6 @@ async def stream_response(inf: inference, user: dict = Depends(check_session_exi
     try:
         print(inf)
         supabase_client = await get_supabase_client_with_token(user["access_token"])
-        return StreamingResponse(run_inference_with_stream(inf.query, user, supabase_client), media_type="text/event-stream")
+        return StreamingResponse(run_inference_with_stream(inf.query, user, supabase_client, admin=True), media_type="text/event-stream")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal Error: {e}")

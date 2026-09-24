@@ -187,7 +187,7 @@ async def customer_query(url_string: str, inf: QueryRequest):
         # placed after it would never be reached
         await increment_customer_requests_in_db(client, business_id, inf.unique_id)
         return StreamingResponse(
-            run_inference_with_stream(inf.query, user, client, inf.unique_id),
+            run_inference_with_stream(inf.query, user, client, inf.unique_id, admin=False),
             media_type="text/event-stream",
         )
     except Exception as e:
